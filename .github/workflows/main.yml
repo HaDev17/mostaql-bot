@@ -2,7 +2,7 @@ name: Run Mostaql Bot
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # كل 30 دقيقة
+    - cron: "*/10 * * * *"  # كل 10 دقيقة
   workflow_dispatch:       # تشغيل يدوي من GitHub
 
 jobs:
