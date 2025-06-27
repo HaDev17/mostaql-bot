@@ -5,32 +5,36 @@ from bs4 import BeautifulSoup
 from telegram import Bot
 import os
 import time
-# تحميل الـ IDs القديمة من الملف
-def load_old_ids(filepath="old_ids.txt"):
-    if not os.path.exists(filepath):
-        return set()
-    with open(filepath, "r", encoding="utf-8") as f:
-        return set(line.strip() for line in f if line.strip().isdigit())
 
-# حفظ ID جديد في الملف
-def save_new_id(project_id, limit=200):
-    try:
-        with open("old_ids.txt", "r") as f:
-            ids = [line.strip() for line in f if line.strip()]
-    except FileNotFoundError:
-        ids = []
-
-    ids.append(project_id)
-    ids = list(dict.fromkeys(ids))  # نحيدو التكرارات
-    ids = ids[-limit:]  # نخليو آخر 200 فقط
-
-    with open("old_ids.txt", "w") as f:
-        for pid in ids:
-            f.write(f"{pid}\n")
+# ---------- إعدادات التخزين في Gist ----------
+GIST_TOKEN = os.environ.get("GIST_TOKEN")
+GIST_ID = os.environ.get("GIST_ID")
+GIST_URL = f"https://api.github.com/gists/{GIST_ID}"
+HEADERS = {"Authorization": f"token {GIST_TOKEN}"}
 
 
-# إعدادات البوت
-# ⬇️ نقرأ ملف الإعدادات
+def download_old_ids():
+    response = requests.get(GIST_URL, headers=HEADERS)
+    response.raise_for_status()
+    content = response.json()["files"]["old_ids.txt"]["content"]
+    return set(line.strip() for line in content.strip().split("\n") if line.strip().isdigit())
+
+
+def upload_old_ids(ids, limit=200):
+    ids = list(dict.fromkeys(ids))
+    ids = ids[-limit:]
+    content = "\n".join(ids)
+    data = {
+        "files": {
+            "old_ids.txt": {
+                "content": content
+            }
+        }
+    }
+    response = requests.patch(GIST_URL, headers=HEADERS, json=data)
+    response.raise_for_status()
+
+# ---------- تحميل الإعدادات ----------
 with open("config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
@@ -45,9 +49,8 @@ bot = Bot(token=TELEGRAM_TOKEN)
 async def send_to_telegram(bot, message):
     await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
 
-
 def extract_project_details(project_url):
-    try :
+    try:
         time.sleep(DELAY)
         response = requests.get(project_url, headers={"User-Agent": "Mozilla/5.0"})
         soup = BeautifulSoup(response.text, "lxml")
@@ -76,16 +79,15 @@ def extract_project_details(project_url):
             "budget": "غير محدد"
         }
 
-
 async def fetch_projects():
     print("🔍 جاري فحص المشاريع ...")
-    try : 
+    try:
         url = "https://mostaql.com/projects?category=development&page=1"
         response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
         soup = BeautifulSoup(response.text, "lxml")
         projects = soup.find_all("tr", class_="project-row")
 
-        old_ids = load_old_ids()
+        old_ids = download_old_ids()
 
         for project in projects:
             title_tag = project.find("a", class_="details-url")
@@ -115,10 +117,12 @@ async def fetch_projects():
                 )
                 await send_to_telegram(bot, message)
 
-            save_new_id(project_id)
+            old_ids.add(project_id)
+
+        upload_old_ids(old_ids)
+
     except Exception as e:
         print(f"❗ خطأ في جلب المشاريع: {e}")
-    
 
 if __name__ == "__main__":
     asyncio.run(fetch_projects())
