@@ -13,7 +13,7 @@ def load_old_ids(filepath="old_ids.txt"):
         return set(line.strip() for line in f if line.strip().isdigit())
 
 # حفظ ID جديد في الملف
-def save_new_id(project_id, limit=100):
+def save_new_id(project_id, limit=200):
     try:
         with open("old_ids.txt", "r") as f:
             ids = [line.strip() for line in f if line.strip()]
@@ -22,7 +22,7 @@ def save_new_id(project_id, limit=100):
 
     ids.append(project_id)
     ids = list(dict.fromkeys(ids))  # نحيدو التكرارات
-    ids = ids[-limit:]  # نخليو آخر 100 فقط
+    ids = ids[-limit:]  # نخليو آخر 200 فقط
 
     with open("old_ids.txt", "w") as f:
         for pid in ids:
