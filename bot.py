@@ -34,6 +34,7 @@ def upload_old_ids(ids, limit=200):
     response = requests.patch(GIST_URL, headers=HEADERS, json=data)
     response.raise_for_status()
 
+
 # ---------- تحميل الإعدادات ----------
 with open("config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
@@ -46,8 +47,10 @@ PROJECT_CLASS = config["project_class"]
 
 bot = Bot(token=TELEGRAM_TOKEN)
 
+
 async def send_to_telegram(bot, message):
     await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+
 
 def extract_project_details(project_url):
     try:
@@ -79,6 +82,7 @@ def extract_project_details(project_url):
             "budget": "غير محدد"
         }
 
+
 async def fetch_projects():
     print("🔍 جاري فحص المشاريع ...")
     try:
@@ -88,7 +92,9 @@ async def fetch_projects():
         projects = soup.find_all("tr", class_="project-row")
 
         old_ids = download_old_ids()
+        new_ids = set()
         new_projects = []
+
         for project in projects:
             title_tag = project.find("a", class_="details-url")
             if not title_tag:
@@ -97,6 +103,7 @@ async def fetch_projects():
             path = title_tag.get("href", "")
             project_id = path.strip("/").split("/")[-1]
             title = title_tag.text.strip()
+
             if project_id in old_ids:
                 continue
 
@@ -107,7 +114,7 @@ async def fetch_projects():
 
             full_text = title + description + details["budget"] + details["duration"]
 
-             if any(keyword.lower() in full_text.lower() for keyword in KEYWORDS):
+            if any(keyword.lower() in full_text.lower() for keyword in KEYWORDS):
                 new_projects.append({
                     "message": (
                         f"📌 {title}\n"
@@ -118,14 +125,19 @@ async def fetch_projects():
                     ),
                     "project_id": project_id
                 })
+
+                new_ids.add(project_id)
+
         for p in new_projects:
             await send_to_telegram(bot, p["message"])
-            save_new_id(p["project_id"])
-        
-        upload_old_ids(old_ids)
+
+        if new_ids:
+            all_ids = list(old_ids.union(new_ids))
+            upload_old_ids(all_ids)
 
     except Exception as e:
         print(f"❗ خطأ في جلب المشاريع: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(fetch_projects())
