@@ -127,7 +127,7 @@ async def fetch_projects():
 
             new_ids.add(project_id)
 
-        for p in new_projects:
+        for p in reversed(new_projects):
             await send_to_telegram(bot, p["message"])
 
         if new_ids:
