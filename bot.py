@@ -114,19 +114,18 @@ async def fetch_projects():
 
             full_text = title + description + details["budget"] + details["duration"]
 
-            if any(keyword.lower() in full_text.lower() for keyword in KEYWORDS):
-                new_projects.append({
-                    "message": (
-                        f"📌 {title}\n"
-                        f"🔗 {path}\n"
-                        f"📌 الحالة: {details['status']}\n"
-                        f"🕒 النشر: {details['posted']} | 📅 المدة: {details['duration']} | 💰 الميزانية: {details['budget']}\n"
-                        f"📝 {description[:100]}..."
-                    ),
-                    "project_id": project_id
-                })
+            new_projects.append({
+                "message": (
+                    f"📌 {title}\n"
+                    f"🔗 {path}\n"
+                    f"📌 الحالة: {details['status']}\n"
+                    f"🕒 النشر: {details['posted']} | 📅 المدة: {details['duration']} | 💰 الميزانية: {details['budget']}\n"
+                    f"📝 {description[:100]}..."
+                ),
+                "project_id": project_id
+            })
 
-                new_ids.add(project_id)
+            new_ids.add(project_id)
 
         for p in new_projects:
             await send_to_telegram(bot, p["message"])
