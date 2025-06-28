@@ -17,7 +17,7 @@ def download_old_ids():
     response = requests.get(GIST_URL, headers=HEADERS)
     response.raise_for_status()
     content = response.json()["files"]["old_ids.txt"]["content"]
-    return set(line.strip() for line in content.strip().split("\n") if line.strip().isdigit())
+    return return set(line.strip() for line in content.strip().split("\n") if line.strip())
 
 
 def upload_old_ids(ids, limit=200):
