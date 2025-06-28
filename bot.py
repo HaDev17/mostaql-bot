@@ -88,7 +88,7 @@ async def fetch_projects():
         projects = soup.find_all("tr", class_="project-row")
 
         old_ids = download_old_ids()
-
+        new_projects = []
         for project in projects:
             title_tag = project.find("a", class_="details-url")
             if not title_tag:
@@ -107,18 +107,21 @@ async def fetch_projects():
 
             full_text = title + description + details["budget"] + details["duration"]
 
-            if any(keyword.lower() in full_text.lower() for keyword in KEYWORDS):
-                message = (
-                    f"📌 {title}\n"
-                    f"🔗 {path}\n"
-                    f"📌 الحالة: {details['status']}\n"
-                    f"🕒 النشر: {details['posted']} | 📅 المدة: {details['duration']} | 💰 الميزانية: {details['budget']}\n"
-                    f"📝 {description[:100]}..."
-                )
-                await send_to_telegram(bot, message)
-
-            old_ids.add(project_id)
-
+             if any(keyword.lower() in full_text.lower() for keyword in KEYWORDS):
+                new_projects.append({
+                    "message": (
+                        f"📌 {title}\n"
+                        f"🔗 {path}\n"
+                        f"📌 الحالة: {details['status']}\n"
+                        f"🕒 النشر: {details['posted']} | 📅 المدة: {details['duration']} | 💰 الميزانية: {details['budget']}\n"
+                        f"📝 {description[:100]}..."
+                    ),
+                    "project_id": project_id
+                })
+        for p in new_projects:
+            await send_to_telegram(bot, p["message"])
+            save_new_id(p["project_id"])
+        
         upload_old_ids(old_ids)
 
     except Exception as e:
