@@ -134,7 +134,7 @@ async def fetch_projects():
             all_ids = list(old_ids.union(new_ids))
             print("🟢 IDs التي سيتم رفعها:", all_ids)
             upload_old_ids(all_ids)
-             print("✅ تم رفع IDs بنجاح.")
+            print("✅ تم رفع IDs بنجاح.")
 
     except Exception as e:
         print(f"❗ خطأ في جلب المشاريع: {e}")
