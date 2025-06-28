@@ -86,7 +86,7 @@ def extract_project_details(project_url):
 async def fetch_projects():
     print("🔍 جاري فحص المشاريع ...")
     try:
-        url = "https://mostaql.com/projects?category=development&page=1"
+        url = "https://mostaql.com/projects?category=development&budget_max=10000&sort=latest"
         response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
         soup = BeautifulSoup(response.text, "lxml")
         projects = soup.find_all("tr", class_="project-row")
@@ -132,7 +132,9 @@ async def fetch_projects():
 
         if new_ids:
             all_ids = list(old_ids.union(new_ids))
+            print("🟢 IDs التي سيتم رفعها:", all_ids)
             upload_old_ids(all_ids)
+             print("✅ تم رفع IDs بنجاح.")
 
     except Exception as e:
         print(f"❗ خطأ في جلب المشاريع: {e}")
